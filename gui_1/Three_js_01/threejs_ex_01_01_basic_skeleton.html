@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="en">
-
-<!--
+  <!--
 
 		threejs_ex_01_01_basic_skeleton.html
 
@@ -16,56 +15,53 @@
 
 -->
 
-<head>
+  <head>
+    <title>three.js example 01 &mdash; Basic skeleton</title>
 
-	<title>three.js example 01 &mdash; Basic skeleton</title>
+    <meta charset="utf-8" />
 
-	<meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0"
+    />
 
-	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+      body {
+        background-color: #000000;
 
-	<style>
-		body {
+        /* To use the complete page */
 
-			background-color: #000000;
+        margin: 0px;
 
-			/* To use the complete page */
+        overflow: hidden;
+      }
+    </style>
+  </head>
 
-			margin: 0px;
+  <body>
+    <script
+      async
+      src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"
+    ></script>
 
-			overflow: hidden;
-		}
-	</style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://threejs.org/build/three.module.js"
+        }
+      }
+    </script>
 
-</head>
+    <script type="module">
+      import * as THREE from "three";
 
-<body>
+      // Once everything is loaded, run this function
 
-	<script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+      function init() {
+        // Write Three.js code here
+      }
 
-	<script type="importmap">
-		{
-    		"imports": {
-     			 "three": "https://threejs.org/build/three.module.js"
-    		}
-  		}
-	</script>
-
-	<script type="module">
-
-		import * as THREE from 'three';
-
-		// Once everything is loaded, run this function
-
-		function init() {
-
-			// Write Three.js code here 
-		}
-
-		window.onload = init
-
-	</script>
-
-</body>
-
+      window.onload = init;
+    </script>
+  </body>
 </html>
