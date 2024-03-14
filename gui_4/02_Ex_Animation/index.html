@@ -60,7 +60,7 @@
                 // ************************** //
                 const ambientLight = new THREE.AmbientLight('rgb(255, 255, 255)', 0.2);
                 sceneElements.sceneGraph.add(ambientLight);
-
+"light 1"
                 // ***************************** //
                 // Add spotlight (with shadows)
                 // ***************************** //
@@ -178,6 +178,11 @@
                 // Set shadow property
                 cylinderObject.castShadow = true;
                 cylinderObject.receiveShadow = true;
+
+                // Name
+                cylinderObject.name = "cylinder";
+                cubeObject.name = "cube";
+                sphereObject.name = "sphere";
             }
         };
 
@@ -191,6 +196,9 @@
 
             // Can extract an object from the scene Graph from its name
             const light = sceneElements.sceneGraph.getObjectByName("light 1");
+            const cube = sceneElements.sceneGraph.getObjectByName("cube");
+            const cylinder = sceneElements.sceneGraph.getObjectByName("cylinder");
+            const sphere = sceneElements.sceneGraph.getObjectByName("sphere");
 
             // Apply a small displacement
 
@@ -200,6 +208,15 @@
                 delta *= -1;
             }
             light.translateX(delta);
+
+            //rotate cylinder around x axis
+            cube.rotateX(0.01);
+
+            //rotate cube around y axis
+            cylinder.rotateY(0.01);
+
+            //move sphere along z axis periodically
+            sphere.translateZ(Math.sin(time / 1000) * 0.01);
 
             // Rendering
             helper.render(sceneElements);
