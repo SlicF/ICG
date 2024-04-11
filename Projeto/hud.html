@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script>
+        window.addEventListener('message', function (event) {
+            document.getElementById('velocity').textContent = 'Velocity: ' + event.data.velocity;
+        }, false);
+    </script>
+    <style>
+        body {
+            background-color: transparent;
+            color: white;
+            font-size: 1.5em;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="velocity">Velocity: 0</div>
+</body>
+
+</html>
