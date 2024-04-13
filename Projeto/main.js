@@ -9,6 +9,12 @@ function init() {
    const hudDocument = hud.contentWindow.document;
 
    const velocityElement = hudDocument.getElementById('velocity');
+   const xElement = hudDocument.getElementById('x');
+   const yElement = hudDocument.getElementById('y');
+   const zElement = hudDocument.getElementById('z');
+   const vxElement = hudDocument.getElementById('vx');
+   const vyElement = hudDocument.getElementById('vy');
+   const vzElement = hudDocument.getElementById('vz');
    const scene = new THREE.Scene();
 
    let light = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.75);
@@ -36,6 +42,14 @@ function init() {
    plane.rotation.x = -Math.PI / 2;
    scene.add(plane);
    objects.push(plane);
+
+   //cube
+   let cubeGeometry = new THREE.BoxGeometry(10, 10, 10);
+   let cubeMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+   let cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+   cube.position.set(0, 5, 0);
+   scene.add(cube);
+   objects.push(cube);
 
    // movement
    let moveForward = false;
@@ -112,6 +126,21 @@ function init() {
       false
    );
 
+   function collisionDetection() {
+      let originPoint = controls.getObject().position.clone();
+      for (let vertexIndex = 0; vertexIndex < controls.getObject().geometry.vertices.length; vertexIndex++) {
+         let localVertex = controls.getObject().geometry.vertices[vertexIndex].clone();
+         let globalVertex = localVertex.applyMatrix4(controls.getObject().matrix);
+         let directionVector = globalVertex.sub(controls.getObject().position);
+         let ray = new THREE.Raycaster(originPoint, directionVector.clone().normalize());
+         let collisionResults = ray.intersectObjects(objects);
+         if (collisionResults.length > 0 && collisionResults[0].distance < directionVector.length()) {
+            return true;
+         }
+      }
+      return false;
+   }
+
    function animate() {
       let time = performance.now();
       let delta = (time - prevTime) / 1000;
@@ -127,15 +156,23 @@ function init() {
          if (controls.getObject().position.y === yHeight/2) {
             velocity.x -= velocity.x * 20.0 * delta;
             velocity.z -= velocity.z * 20.0 * delta;
-            if (moveForward || moveBackward)
+            if (((moveForward || moveBackward) && direction.x != 0 ) && (moveLeft || moveRight && direction.z != 0)){
+               velocity.z -= direction.z * 400.0 * delta / 2**(1/2) ;
+               velocity.x -= direction.x * 400.0 * delta / 2**(1/2);
+            }
+            else if (moveForward || moveBackward)
                velocity.z -= direction.z * 400.0 * delta;
-            if (moveLeft || moveRight)
+            else if (moveLeft || moveRight)
                velocity.x -= direction.x * 400.0 * delta;
          }
          else {
-            if (moveForward || moveBackward)
+            if (((moveForward || moveBackward) && direction.x != 0 ) && (moveLeft || moveRight && direction.z != 0)){
+               velocity.z -= direction.z * 7.0 * delta / 2**(1/2) ;
+               velocity.x -= direction.x * 7.0 * delta / 2**(1/2);
+            }
+            else if (moveForward || moveBackward)
                velocity.z -= direction.z * 7.0 * delta;
-            if (moveLeft || moveRight)
+            else if (moveLeft || moveRight)
                velocity.x -= direction.x * 7.0 * delta;
          }
 
@@ -154,13 +191,21 @@ function init() {
          if (controls.getObject().position.y === yHeight) {
             velocity.x -= velocity.x * 15.0 * delta;
             velocity.z -= velocity.z * 15.0 * delta;
-            if (moveForward || moveBackward)
+            if (((moveForward || moveBackward) && direction.x != 0 ) && (moveLeft || moveRight && direction.z != 0)){
+               velocity.z -= direction.z * 750.0 * delta / 2**(1/2) ;
+               velocity.x -= direction.x * 750.0 * delta / 2**(1/2);
+            }
+            else if (moveForward || moveBackward)
                velocity.z -= direction.z * 750.0 * delta;
-            if (moveLeft || moveRight)
+            else if (moveLeft || moveRight)
                velocity.x -= direction.x * 750.0 * delta;
          }
          else {
-            if (moveForward || moveBackward)
+            if (((moveForward || moveBackward) && direction.x != 0 ) && (moveLeft || moveRight && direction.z != 0)){
+               velocity.z -= direction.z * 15.0 * delta / 2**(1/2) ;
+               velocity.x -= direction.x * 15.0 * delta / 2**(1/2);
+            }
+            else if (moveForward || moveBackward)
                velocity.z -= direction.z * 15.0 * delta;
             if (moveLeft || moveRight)
                velocity.x -= direction.x * 15.0 * delta;
@@ -181,7 +226,18 @@ function init() {
 
       const horizontalVelocity = new THREE.Vector3(velocity.x, 0, velocity.z);
       velocityElement.textContent = `Velocity: ${horizontalVelocity.length().toFixed(2)}`;
+      xElement.textContent = ` X: ${controls.getObject().position.x.toFixed(2)} `;
+      yElement.textContent = ` Y: ${controls.getObject().position.y.toFixed(2)} `;
+      zElement.textContent = ` Z: ${controls.getObject().position.z.toFixed(2)} `;
       hud.contentWindow.postMessage({ velocity: horizontalVelocity.length().toFixed(2) }, '*');
+      //display x, y, z in the hud divs with id x, y, z
+      hud.contentWindow.postMessage({ x: controls.getObject().position.x.toFixed(2) }, '*');
+      hud.contentWindow.postMessage({ y: controls.getObject().position.y.toFixed(2) }, '*');
+      hud.contentWindow.postMessage({ z: controls.getObject().position.z.toFixed(2) }, '*');
+      //display vx, vy, vz in the hud divs with id vx, vy, vz
+      vxElement.textContent = ` VX: ${velocity.x.toFixed(2)} `;
+      vyElement.textContent = ` VY: ${velocity.y.toFixed(2)} `;
+      vzElement.textContent = ` VZ: ${velocity.z.toFixed(2)} `;
 
       prevTime = time;
 

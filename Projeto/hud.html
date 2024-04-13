@@ -2,16 +2,11 @@
 <html>
 
 <head>
-    <script>
-        window.addEventListener('message', function (event) {
-            document.getElementById('velocity').textContent = 'Velocity: ' + event.data.velocity;
-        }, false);
-    </script>
     <style>
         body {
             background-color: transparent;
             color: white;
-            font-size: 1.5em;
+            font-size: em;
             margin: 0;
             padding: 0;
             display: flex;
@@ -21,7 +16,15 @@
 </head>
 
 <body>
-    <div id="velocity">Velocity: 0</div>
+    <div>
+        <div id="velocity">Velocity: 0</div><br>
+        <div id="x"> X: 0 </div> 
+        <div id="y"> Y: 0 </div> 
+        <div id="z"> Z: 0 </div><br>
+        <div id="vx"> VX: 0 </div> 
+        <div id="vy"> VY: 0 </div> 
+        <div id="vz"> VZ: 0 </div><br>
+    </div>
 </body>
 
 </html>
