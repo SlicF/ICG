@@ -1,7 +1,6 @@
 import * as THREE from "three";
-import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
 import { initControls } from '/controls.js';
-import { cos, or } from "three/examples/jsm/nodes/Nodes.js";
+import { or } from "three/examples/jsm/nodes/Nodes.js";
 
 let objects = [];
 
@@ -22,7 +21,7 @@ function init() {
    light.position.set(0.5, 1, 0.75);
    scene.add(light);
 
-   const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000);
+   const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.0001, 500);
    var yHeight = 6;
    camera.position.set(0, yHeight, 15);
    camera.lookAt(0, yHeight, 0);
@@ -31,26 +30,39 @@ function init() {
    renderer.setSize(window.innerWidth, window.innerHeight);
    document.body.appendChild(renderer.domElement);
 
+
+   // Adiciona o ouvinte de eventos
+   window.addEventListener('resize', onWindowResize, false);
+
    const controls = initControls(camera, renderer.domElement);
 
 
-   let geometry = new THREE.PlaneGeometry(2000, 2000, 100, 100);
+   let geometry = new THREE.BoxGeometry(1000, 6, 1000);
    let material = new THREE.MeshLambertMaterial({
       color: 0xffffff,
       wireframe: true,
    });
    let plane = new THREE.Mesh(geometry, material);
-   plane.rotation.x = -Math.PI / 2;
+   plane.position.set(0, -3, 0);
    scene.add(plane);
    objects.push(plane);
 
    //cube
-   let cubeGeometry = new THREE.BoxGeometry(10, 5, 10);
+   let cubeGeometry = new THREE.BoxGeometry(12, 6, 12);
    let cubeMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
-   let cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-   cube.position.set(0, 2.5, 0);
-   scene.add(cube);
-   objects.push(cube);
+
+
+   // let cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+   // cube.position.set(0, 2.5, 0);
+   // scene.add(cube);
+   // objects.push(cube);
+   // generate a series of cubes
+   for (let i = 0; i < 10; i++) {
+      let cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+      cube.position.set(i * 24, i * 8, i * 24); // increase y position for each cube
+      scene.add(cube);
+      objects.push(cube);
+   }
 
    // movement
    let moveForward = false;
@@ -142,33 +154,46 @@ function init() {
       else
          var hitbox = new THREE.Box3().setFromCenterAndSize(originPoint, new THREE.Vector3(1, yHeight, 1));
 
+      let hitboxX = hitbox.max.x - hitbox.min.x;
+      let hitboxY = hitbox.max.y - hitbox.min.y;
+      let hitboxZ = hitbox.max.z - hitbox.min.z;
+
       for (let i = 0; i < objects.length; i++) {
          let object = objects[i];
          let objectHitbox = new THREE.Box3().setFromObject(object);
+         let objectHitboxX = objectHitbox.max.x - objectHitbox.min.x;
+         let objectHitboxY = objectHitbox.max.y - objectHitbox.min.y;
+         let objectHitboxZ = objectHitbox.max.z - objectHitbox.min.z;
          if (hitbox.intersectsBox(objectHitbox)) {
-            //if the intersection is from the top
-            if (objectHitbox.max.y > hitbox.max.y) {
-               collisionDirections.push([i, 5]);
-            }
-            //if the intersection is from the bottom
-            else if (objectHitbox.min.y < hitbox.min.y) {
-               collisionDirections.push([i, 6]);
-            }
-            //if the intersection is from the front
-            else if (objectHitbox.max.z > hitbox.max.z) {
-               collisionDirections.push([i, 1]);
-            }
-            //if the intersection is from the back
-            else if (objectHitbox.min.z < hitbox.min.z) {
-               collisionDirections.push([i, 2]);
-            }
-            //if the intersection is from the left
-            else if (objectHitbox.min.x < hitbox.min.x) {
-               collisionDirections.push([i, 3]);
-            }
-            //if the intersection is from the right
-            else if (objectHitbox.max.x > hitbox.max.x) {
-               collisionDirections.push([i, 4]);
+            console.log(objectHitbox.min.y, hitbox.max.y);
+            switch (true) {
+               case object.position.y > originPoint.y:
+                  //top
+                  collisionDirections.push([i, 5]);
+                  break;
+               case object.position.y < originPoint.y:
+                  //bottom
+                  collisionDirections.push([i, 6]);
+                  break;
+               case objectHitbox.min.z < hitbox.max.z || objectHitbox.max.z < hitbox.min.z || (objectHitbox.min.z < hitbox.max.z && objectHitbox.max.z > hitbox.min.z):
+                  if (object.position.x > originPoint.x) {
+                     //left
+                     collisionDirections.push([i, 3]);
+                  }
+                  if (object.position.x < originPoint.x) {
+                     //right
+                     collisionDirections.push([i, 4]);
+                  } 
+               case objectHitbox.min.x < hitbox.max.x || objectHitbox.max.x < hitbox.min.x || (objectHitbox.min.x < hitbox.max.x && objectHitbox.max.x > hitbox.min.x):
+                  if (object.position.z > originPoint.z) {
+                     //forward
+                     collisionDirections.push([i, 1]);
+                  }
+                  if (object.position.z < originPoint.z) {
+                     //backward
+                     collisionDirections.push([i, 2]);
+                  }
+
             }
          }
       }
@@ -177,10 +202,8 @@ function init() {
 
    function animate() {
 
-      // console.log("canJump: " + canJump);
 
       let collidingObjects = collisionDetection();
-      // console.log(collidingObjects);
 
       let time = performance.now();
       let delta = (time - prevTime) / 1000;
@@ -196,67 +219,94 @@ function init() {
       velocity.y -= 100 * delta;
 
       controls.getObject().position.y += velocity.y * delta; // new behavior
-
-      for (let i = 0; i < collidingObjects.length; i++) {
-         let object = objects[collidingObjects[i][0]];
-         let objectHitbox = new THREE.Box3().setFromObject(object);
-         //ground
-         if (collidingObjects[i][1] === 6) {
-            console.log("grounded");
-            velocity.y = 0;
-            canJump = true;
-            if (!isCrouched) {
-               controls.getObject().position.y = objectHitbox.max.y + yHeight;
-               velocity.x -= velocity.x * 15.0 * delta;
-               velocity.z -= velocity.z * 15.0 * delta;
-               if (((moveForward || moveBackward) && direction.x != 0) && (moveLeft || moveRight && direction.z != 0)) {
-                  velocity.z -= direction.z * 750.0 * delta / 2 ** (1 / 2);
-                  velocity.x -= direction.x * 750.0 * delta / 2 ** (1 / 2);
-               }
-               else if (moveForward || moveBackward)
-                  velocity.z -= direction.z * 750.0 * delta;
-               else if (moveLeft || moveRight)
-                  velocity.x -= direction.x * 750.0 * delta;
+      if (collidingObjects.length === 0) {
+         if (isCrouched) {
+            if (((moveForward || moveBackward) && direction.x != 0) && (moveLeft || moveRight && direction.z != 0)) {
+               velocity.z -= direction.z * 7.0 * delta / 2 ** (1 / 2);
+               velocity.x -= direction.x * 7.0 * delta / 2 ** (1 / 2);
             }
-            else {
-               controls.getObject().position.y = objectHitbox.max.y + yHeight / 2;
-               velocity.x -= velocity.x * 20.0 * delta;
-               velocity.z -= velocity.z * 20.0 * delta;
-               if (((moveForward || moveBackward) && direction.x != 0) && (moveLeft || moveRight && direction.z != 0)) {
-                  velocity.z -= direction.z * 400.0 * delta / 2 ** (1 / 2);
-                  velocity.x -= direction.x * 400.0 * delta / 2 ** (1 / 2);
-               }
-               else if (moveForward || moveBackward)
-                  velocity.z -= direction.z * 400.0 * delta;
-               else if (moveLeft || moveRight)
-                  velocity.x -= direction.x * 400.0 * delta;
-            }
+            else if (moveForward || moveBackward)
+               velocity.z -= direction.z * 7.0 * delta;
+            else if (moveLeft || moveRight)
+               velocity.x -= direction.x * 7.0 * delta;
          }
-         //mid air
          else {
-            console.log("mid air");
-            if (isCrouched) {
-               if (((moveForward || moveBackward) && direction.x != 0) && (moveLeft || moveRight && direction.z != 0)) {
-                  velocity.z -= direction.z * 7.0 * delta / 2 ** (1 / 2);
-                  velocity.x -= direction.x * 7.0 * delta / 2 ** (1 / 2);
-               }
-               else if (moveForward || moveBackward)
-                  velocity.z -= direction.z * 7.0 * delta;
-               else if (moveLeft || moveRight)
-                  velocity.x -= direction.x * 7.0 * delta;
+            if (((moveForward || moveBackward) && direction.x != 0) && (moveLeft || moveRight && direction.z != 0)) {
+               velocity.z -= direction.z * 15.0 * delta / 2 ** (1 / 2);
+               velocity.x -= direction.x * 15.0 * delta / 2 ** (1 / 2);
             }
-            else {
-               if (((moveForward || moveBackward) && direction.x != 0) && (moveLeft || moveRight && direction.z != 0)) {
-                  velocity.z -= direction.z * 15.0 * delta / 2 ** (1 / 2);
-                  velocity.x -= direction.x * 15.0 * delta / 2 ** (1 / 2);
+            else if (moveForward || moveBackward)
+               velocity.z -= direction.z * 15.0 * delta;
+            else if (moveLeft || moveRight)
+               velocity.x -= direction.x * 15.0 * delta;
+         }
+      }
+      else {
+         for (let i = 0; i < collidingObjects.length; i++) {
+            let object = objects[collidingObjects[i][0]];
+            let objectHitbox = new THREE.Box3().setFromObject(object);
+            if (collidingObjects[i][1] === 6) {
+               if (!isCrouched) {
+                  velocity.x -= velocity.x * 15.0 * delta;
+                  velocity.z -= velocity.z * 15.0 * delta;
+                  if (((moveForward || moveBackward) && direction.x != 0) && (moveLeft || moveRight && direction.z != 0)) {
+                     velocity.z -= direction.z * 750.0 * delta / 2 ** (1 / 2);
+                     velocity.x -= direction.x * 750.0 * delta / 2 ** (1 / 2);
+                  }
+                  else if (moveForward || moveBackward)
+                     velocity.z -= direction.z * 750.0 * delta;
+                  else if (moveLeft || moveRight)
+                     velocity.x -= direction.x * 750.0 * delta;
+
+                  if (controls.getObject().position.y < object.position.y + (objectHitbox.max.y - objectHitbox.min.y) / 2 + yHeight) {
+                     velocity.y = 0;
+                     controls.getObject().position.y = object.position.y + (objectHitbox.max.y - objectHitbox.min.y) / 2 + yHeight;
+                     canJump = true;
+                  }
                }
-               else if (moveForward || moveBackward)
-                  velocity.z -= direction.z * 15.0 * delta;
-               else if (moveLeft || moveRight)
-                  velocity.x -= direction.x * 15.0 * delta;
+               else {
+                  velocity.x -= velocity.x * 20.0 * delta;
+                  velocity.z -= velocity.z * 20.0 * delta;
+                  if (((moveForward || moveBackward) && direction.x != 0) && (moveLeft || moveRight && direction.z != 0)) {
+                     velocity.z -= direction.z * 400.0 * delta / 2 ** (1 / 2);
+                     velocity.x -= direction.x * 400.0 * delta / 2 ** (1 / 2);
+                  }
+                  else if (moveForward || moveBackward)
+                     velocity.z -= direction.z * 400.0 * delta;
+                  else if (moveLeft || moveRight)
+                     velocity.x -= direction.x * 400.0 * delta;
+                  if (controls.getObject().position.y < object.position.y + (objectHitbox.max.y - objectHitbox.min.y) / 2 + yHeight / 2) {
+                     velocity.y = 0;
+                     controls.getObject().position.y = object.position.y + (objectHitbox.max.y - objectHitbox.min.y) / 2 + yHeight / 2;
+                     canJump = true;
+                  }
+               }
+            }
+            if (collidingObjects[i][1] === 5) {
+               if (controls.getObject().position.y > object.position.y - (objectHitbox.max.y - objectHitbox.min.y) / 2) {
+                  velocity.y = 0;
+                  controls.getObject().position.y = object.position.y - (objectHitbox.max.y - objectHitbox.min.y) / 2;
+               }
+            }
+            if (collidingObjects[i][1] === 1) {
+               console.log('colliding with forward');
+
+            }
+            if (collidingObjects[i][1] === 2) {
+               console.log('colliding with backward');
+
+            }
+            if (collidingObjects[i][1] === 3) {
+               console.log('colliding with left');
+
+            }
+            if (collidingObjects[i][1] === 4) {
+               console.log('colliding with right');
+
             }
          }
       }
+
 
 
 
@@ -279,6 +329,15 @@ function init() {
 
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
+   }
+
+   function onWindowResize() {
+      // Atualiza o aspecto da câmera
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      // Atualiza o tamanho do renderizador
+      renderer.setSize(window.innerWidth, window.innerHeight);
    }
 
    animate();
