@@ -8,7 +8,48 @@ let objects = [];
 function init() {
 
    const hud = document.getElementById('hud');
+   const ControlsHud = document.getElementById('hud_controls');
    const hudDocument = hud.contentWindow.document;
+   const ControlsHudDocument = ControlsHud.contentWindow.document;
+
+   let hudShowing = true;
+   let gamePaused = false;
+
+   let hardMode = localStorage.getItem('hardMode') === 'true' ? true : false;
+   if (!localStorage.getItem('hardMode')) {
+      localStorage.setItem('hardMode', hardMode.toString());
+   }
+
+   function hideHud() {
+      if (hudShowing) {
+         hideControlsElement.style.display = 'block';
+         pauseElement.style.display = 'block';
+         jumpElement.style.display = 'block';
+         crouchElement.style.display = 'block';
+         forwardElement.style.display = 'block';
+         backwardElement.style.display = 'block';
+         leftElement.style.display = 'block';
+         rightElement.style.display = 'block';
+         hardElement.style.display = 'block';
+
+         hudShowing = false;
+      } else {
+         hideControlsElement.style.display = 'none';
+         pauseElement.style.display = 'none';
+         jumpElement.style.display = 'none';
+         crouchElement.style.display = 'none';
+         forwardElement.style.display = 'none';
+         backwardElement.style.display = 'none';
+         leftElement.style.display = 'none';
+         rightElement.style.display = 'none';
+         hardElement.style.display = 'none';
+
+         hudShowing = true;
+      }
+   }
+
+
+
 
    const velocityElement = hudDocument.getElementById('velocity');
    const xElement = hudDocument.getElementById('x');
@@ -18,20 +59,47 @@ function init() {
    const vyElement = hudDocument.getElementById('vy');
    const vzElement = hudDocument.getElementById('vz');
    const timeElement = hudDocument.getElementById('time');
+   const hardModeElement = hudDocument.getElementById('hardMode');
    const scene = new THREE.Scene();
    let timer = 0;
    let timerStart = false;
 
+   const hideControlsElement = ControlsHudDocument.getElementById('h');
+   const pauseElement = ControlsHudDocument.getElementById('p');
+   const jumpElement = ControlsHudDocument.getElementById('space');
+   const crouchElement = ControlsHudDocument.getElementById('shift');
+   const forwardElement = ControlsHudDocument.getElementById('w');
+   const backwardElement = ControlsHudDocument.getElementById('s');
+   const leftElement = ControlsHudDocument.getElementById('a');
+   const rightElement = ControlsHudDocument.getElementById('d');
+   const hardElement = ControlsHudDocument.getElementById('enter');
+
+   // Carregue a imagem
+   const loader = new THREE.TextureLoader();
+   const texture = loader.load('sky.jpg');
+
+   // Crie a esfera
+   const skyboxGeometry = new THREE.SphereGeometry(500, 32, 32);
+   const skyboxMaterial = new THREE.MeshBasicMaterial({ map: texture, side: THREE.BackSide });
+   const skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterial);
+
+   // Defina a prioridade de renderização da skybox
+   skybox.renderOrder = -Infinity;
+
+   // Adicione a esfera à cena
+   scene.add(skybox);
+
+
    let HemisphereLight = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.1);
    scene.add(HemisphereLight);
 
-   let light = new THREE.PointLight(0xffffff, 100000, 1000000, 1);
+   let light = new THREE.PointLight(0xffffff, 500000, 1000000, 1);
    light.position.set(-100000, 100000, -100000);
    light.castShadow = true;
    light.shadow.camera.near = 0.1;
    scene.add(light);
 
-   const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.0001, 200);
+   const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.0001, 500);
    var yHeight = 6;
    camera.position.set(0, yHeight, 15);
    camera.lookAt(0, yHeight, 0);
@@ -39,6 +107,9 @@ function init() {
    const renderer = new THREE.WebGLRenderer();
    renderer.setSize(window.innerWidth, window.innerHeight);
    document.body.appendChild(renderer.domElement);
+   renderer.setPixelRatio(window.devicePixelRatio);
+   renderer.setClearColor(0x000000, 0);
+   renderer.antialias = true;
 
 
    // Adiciona o ouvinte de eventos
@@ -47,14 +118,15 @@ function init() {
    const controls = initControls(camera, renderer.domElement);
 
 
-   let geometry = new THREE.BoxGeometry(2000, 6, 2000);
+   let geometry = new THREE.BoxGeometry(4000, 3, 4000);
    let material = new THREE.MeshLambertMaterial({
-      color: 0x2fafef,
+      color: 0x1fdf1f,
       wireframe: false,
    });
    let plane = new THREE.Mesh(geometry, material);
    plane.position.set(0, -3, 0);
    //receives shadows
+   plane.castShadow = true;
    plane.receiveShadow = true;
    scene.add(plane);
    objects.push(plane);
@@ -79,6 +151,7 @@ function init() {
                cubePosition.set(0, i * 6 + 4, -i * 36); // increase y position for each cube
                cube.position.set(cubePosition.x, cubePosition.y, cubePosition.z); // increase y position for each cube
                cube.castShadow = true;
+               cube.receiveShadow = true
                scene.add(cube);
                objects.push(cube);
             }
@@ -139,10 +212,32 @@ function init() {
             }
             lastBlockPosition = objects[objects.length - 1].position;
             break;
+         case 5:
+            //last block from level 4
+            firstBlockPosition = lastBlockPosition;
+            cube.position.set(firstBlockPosition.x, firstBlockPosition.y, firstBlockPosition.z);
+            cube.castShadow = true;
+            scene.add(cube);
+            objects.push(cube);
+
+            for (let i = 0; i < 15; i++) {
+               cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+               cubePosition.set(firstBlockPosition.x + - 42 * Math.sin(i), firstBlockPosition.y + 4 * Math.sin(i) + 2 * i, + firstBlockPosition.z - i * 39)
+               cube.position.set(cubePosition.x, cubePosition.y, cubePosition.z); // increase x position for each cube
+               cube.castShadow = true;
+               scene.add(cube);
+               objects.push(cube);
+            }
+            lastBlockPosition = objects[objects.length - 1].position;
+            break;
 
          default:
             console.log('Done!');
-            stopTimer();
+            if (timerStart === true) {
+               stopTimer();
+            }
+            //reload page
+            location.reload();
             break;
       }
    }
@@ -155,33 +250,35 @@ function init() {
       timerStart = true;
    }
 
-   function stopTimer() {
-      //stop timer
+   function pauseResume() {
       if (timerStart === true) {
-         timerStart = false
-         setInterval
+         timer = timer;
+         setInterval(() => {
+            timer--;
+         }, 100);
+         timerStart = false;
+      } else {
+         setInterval(() => {
+            timer++;
+         }, 100);
+         timerStart = true;
       }
+   }
 
+   function stopTimer() {
+      timerStart = false;
+
+      //stop timer and save time in local storage
+      timer = timer;
       setInterval(() => {
          timer--;
-      }
-         , 100);
+      }, 100);
 
       //if there is times in local Storage, add to the array else create a new array
       let times = JSON.parse(localStorage.getItem('times')) || [];
-      times.push(timer);
+      times.push({ time: timer, hardMode: hardMode });
       localStorage.setItem('times', JSON.stringify(times));
 
-   }
-
-   function createWall(x, y, z, length) {
-      let wallGeometry = new THREE.BoxGeometry(length, 6, 6);
-      let wallMaterial = new THREE.MeshLambertMaterial({ color: 0x0f0fff });
-      let wall = new THREE.Mesh(wallGeometry, wallMaterial);
-      wall.position.set(x, y, z);
-      wall.castShadow = true;
-      scene.add(wall);
-      objects.push(wall);
    }
 
    function nextLevel() {
@@ -257,6 +354,17 @@ function init() {
             case 16:
                isCrouched = true;
                break;
+            case 80: // p
+               pauseGame();
+               break;
+            //h for hide hud
+            case 72: // h
+               hideHud();
+               break;
+            //Enter for hard mode
+            case 13: // Enter
+               hardModeToggle();
+               break;
          }
       },
       false
@@ -285,10 +393,50 @@ function init() {
             case 16:
                isCrouched = false;
                break;
+
          }
       },
       false
    );
+
+   function pauseGame() {
+      if (gamePaused) {
+         gamePaused = false;
+         //hide pause.html
+         const pause = document.getElementById('pause');
+         pause.style.display = 'none';
+         pauseResume();
+         animate();
+      } else {
+         gamePaused = true;
+         //show pause.html
+         const pause = document.getElementById('pause');
+         pause.style.display = 'block';
+      }
+   }
+
+   function hardModeToggle() {
+      if (timer === 0) {
+         //if hardmode is true, set to false and vice versa
+         if (hardMode) {
+            hardMode = false;
+         } else {
+            hardMode = true;
+         }
+         localStorage.setItem('hardMode', hardMode.toString());
+      }
+      else {
+         if (hardMode) {
+            hardMode = false;
+            localStorage.setItem('hardMode', hardMode.toString());
+            location.reload();
+         } else {
+            hardMode = true;
+            localStorage.setItem('hardMode', hardMode.toString());
+            location.reload();
+         }
+      }
+   }
 
    function collisionDetection() {
       let originPoint = controls.getObject().position.clone();
@@ -358,7 +506,15 @@ function init() {
    }
 
    function animate() {
-      respawn();
+      //if game is paused, stop the animation
+      if (gamePaused) {
+         pauseResume();
+         return;
+      }
+      if (!hardMode) {
+         respawn();
+      }
+
       nextLevel();
 
       //if player is on top of the first block of the level 1 start timer
@@ -367,6 +523,7 @@ function init() {
             startTimer();
          }
       }
+
 
 
       let collidingObjects = collisionDetection();
@@ -526,6 +683,8 @@ function init() {
       let minutes = Math.floor(timer / 600) % 60;
       timeElement.textContent = `Time: ${minutes}:${seconds}:${milliseconds}`;
 
+      hardModeElement.textContent = `Hard Mode: ${hardMode}`;
+
       absV = Math.sqrt(velocity.x ** 2 + velocity.z ** 2);
 
       alpha = Math.acos(velocity.z / absV);
@@ -541,7 +700,13 @@ function init() {
       absVx = Math.round(absVx * 100) / 100;
       absVz = Math.round(absVz * 100) / 100;
 
+      //skybox position equals the position of the player
+      skybox.position.copy(controls.getObject().position);
+
+
       prevTime = time;
+
+      
 
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
