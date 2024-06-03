@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import * as THREE from 'three';
 import { initControls } from '/controls.js';
 import { or } from "three/examples/jsm/nodes/Nodes.js";
 
