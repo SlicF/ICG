@@ -1,8 +1,13 @@
 {
   "dependencies": {
+    "run": "^1.5.0",
     "three": "^0.162.0"
   },
   "devDependencies": {
     "vite": "^5.2.8"
+  },
+  "scripts": {
+    "build": "vite build"
   }
 }
+
