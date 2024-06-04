@@ -11,3 +11,9 @@ Foi adicionada uma skybox
 Foi adicionado um hud de ajuda nos controlos
 
 Foi adicionado um menu de pausa, que mostra os melhores tempos do utilizador local.
+
+O deploy foi refeito.
+
+LINK PARA O DEPLOY:
+
+https://levelhoping-icg-slicf.netlify.app/

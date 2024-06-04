@@ -76,7 +76,7 @@ function init() {
 
    // Carregue a imagem
    const loader = new THREE.TextureLoader();
-   const texture = loader.load('sky.jpg');
+   const texture = loader.load('/sky.jpg');
 
    // Crie a esfera
    const skyboxGeometry = new THREE.SphereGeometry(500, 32, 32);
