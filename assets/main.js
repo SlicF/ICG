@@ -1,6 +1,6 @@
-import * as THREE from '/node_modules/three';
-import { initControls } from '/controls.js';
-import { or } from "/node_modules/three/examples/jsm/nodes/Nodes.js";
+import * as THREE from 'three';
+import { initControls } from './controls.js';
+import { or } from "three/examples/jsm/nodes/Nodes.js";
 
 
 let objects = [];
